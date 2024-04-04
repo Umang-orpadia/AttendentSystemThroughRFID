@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Attendance Dashboard</title>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js'></script>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%; 
+      margin: 20px auto; /* Center the table */
+    }
+    th, td {
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd; 
+    }
+    th {
+      background-color: #f0f0f0;  
+    } 
+    h2, h3 {
+      margin-bottom: 10px; 
+    }
+  </style> 
+</head>
+<body>
+  <h1>Attendance Records</h1>
+  <input type="date" id="dateFilter"> <button id="filterButton">Filter</button> 
+
+  <div id="attendance-data"></div> 
+
+  <script>
+  $('#filterButton').click(function() { 
+    let selectedDate = $('#dateFilter').val(); 
+    $.get('/attendance/' + selectedDate, function(data) { 
+      displayAttendanceData(data); 
+    });
+  });
+
+  function displayAttendanceData(data) {
+    let attendanceHtml = '';
+
+    // Group by date and lecture
+    const groupedData = {}; 
+    for (let record of data.attendance) {
+      const date = record.date;
+      const lectureNumber = record.lecture_number;
+      const key = `${date}-Lecture${lectureNumber}`; 
+
+      if (!groupedData[key]) {
+        groupedData[key] = []; 
+      }
+      groupedData[key].push(record);  
+    }
+
+    // Build HTML for each date and lecture
+    for (const [key, records] of Object.entries(groupedData)) {
+      const lectureStr = key.split('-').pop(); // Get just the lecture number
+      attendanceHtml += `<h3>${lectureStr}</h3>`;
+
+      attendanceHtml += '<table>';
+      attendanceHtml += '<thead><tr><th>Student Name</th><th>Time</th></tr></thead>';
+      attendanceHtml += '<tbody>';
+
+      for (let record of records) {
+        attendanceHtml += '<tr>';
+        attendanceHtml += `<td>${record.student_name}</td>`;
+        attendanceHtml += `<td>${record.time}</td>`;
+        attendanceHtml += '</tr>';
+      }
+
+      attendanceHtml += '</tbody></table>'; 
+    }
+
+    $('#attendance-data').html(attendanceHtml); 
+  }
+  </script>
+</body>
+</html>
